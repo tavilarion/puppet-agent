@@ -86,7 +86,7 @@ component "leatherman" do |pkg, settings, platform|
 
   if platform.is_linux?
     # Ensure our gettext packages are found before system versions
-    pkg.environment "PATH", "/opt/pl-build-tools/bin:$(PATH)"
+    pkg.environment "PATH", "/opt/pl-build-tools/bin:${PATH}"
   end
 
   pkg.configure do
@@ -105,7 +105,7 @@ component "leatherman" do |pkg, settings, platform|
   end
 
   pkg.build do
-    ["#{make} -j$(shell expr $(shell #{platform[:num_cores]}) + 1)"]
+    ["#{make} -j$(($(#{platform[:num_cores]}) + 1))"]
   end
 
   # Make test will explode horribly in a cross-compile situation
@@ -116,12 +116,12 @@ component "leatherman" do |pkg, settings, platform|
     end
 
     pkg.check do
-      ["LEATHERMAN_RUBY=#{settings[:libdir]}/$(shell #{ruby} -e 'print RbConfig::CONFIG[\"LIBRUBY_SO\"]') \
+      ["LEATHERMAN_RUBY=#{settings[:libdir]}/$(#{ruby} -e 'print RbConfig::CONFIG[\"LIBRUBY_SO\"]') \
        LD_LIBRARY_PATH=#{settings[:libdir]} LIBPATH=#{settings[:libdir]} #{test_locale} #{make} test ARGS=-V"]
     end
   end
 
   pkg.install do
-    ["#{make} -j$(shell expr $(shell #{platform[:num_cores]}) + 1) install"]
+    ["#{make} -j$(($(#{platform[:num_cores]}) + 1)) install"]
   end
 end

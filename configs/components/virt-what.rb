@@ -32,7 +32,7 @@ component "virt-what" do |pkg, settings, platform|
   if platform.is_cross_compiled_linux?
     host_opt = "--host #{settings[:platform_triple]}"
 
-    pkg.environment "PATH" => "/opt/pl-build-tools/bin:$$PATH:#{settings[:bindir]}"
+    pkg.environment "PATH" => "/opt/pl-build-tools/bin:$PATH:#{settings[:bindir]}"
     pkg.environment "CFLAGS" => settings[:cflags]
     pkg.environment "LDFLAGS" => settings[:ldflags]
   end
@@ -42,10 +42,10 @@ component "virt-what" do |pkg, settings, platform|
   end
 
   pkg.build do
-    ["#{platform[:make]} -j$(shell expr $(shell #{platform[:num_cores]}) + 1)"]
+    ["#{platform[:make]} -j$(($(#{platform[:num_cores]}) + 1))"]
   end
 
   pkg.install do
-    ["#{platform[:make]} -j$(shell expr $(shell #{platform[:num_cores]}) + 1) install"]
+    ["#{platform[:make]} -j$(($(#{platform[:num_cores]}) + 1)) install"]
   end
 end

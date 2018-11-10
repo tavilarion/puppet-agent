@@ -32,7 +32,7 @@ component "facter" do |pkg, settings, platform|
   if platform.is_windows?
     pkg.environment "PATH", "$(shell cygpath -u #{settings[:gcc_bindir]}):$(shell cygpath -u #{settings[:ruby_bindir]}):$(shell cygpath -u #{settings[:bindir]}):/cygdrive/c/Windows/system32:/cygdrive/c/Windows:/cygdrive/c/Windows/System32/WindowsPowerShell/v1.0"
   else
-    pkg.environment "PATH", "#{settings[:bindir]}:$(PATH)"
+    pkg.environment "PATH", "#{settings[:bindir]}:${PATH}"
   end
 
   if platform.is_macos?
@@ -170,7 +170,7 @@ component "facter" do |pkg, settings, platform|
 
   unless platform.is_windows?
     special_flags += " -DFACTER_PATH=#{settings[:bindir]} \
-                       -DFACTER_RUBY=#{settings[:libdir]}/$(shell #{ruby} -e 'print RbConfig::CONFIG[\"LIBRUBY_SO\"]') \
+                       -DFACTER_RUBY=#{settings[:libdir]}/$(#{ruby} -e 'print RbConfig::CONFIG[\"LIBRUBY_SO\"]') \
                        -DRUBY_LIB_INSTALL=#{settings[:ruby_vendordir]}"
   end
 
@@ -195,11 +195,11 @@ component "facter" do |pkg, settings, platform|
   end
 
   pkg.build do
-    ["#{make} -j$(shell expr $(shell #{platform[:num_cores]}) + 1)"]
+    ["#{make} -j$(($(#{platform[:num_cores]}) + 1))"]
   end
 
   pkg.install do
-    ["#{make} -j$(shell expr $(shell #{platform[:num_cores]}) + 1) install"]
+    ["#{make} -j$(($(#{platform[:num_cores]}) + 1)) install"]
   end
 
   if platform.is_macos?
@@ -213,8 +213,8 @@ component "facter" do |pkg, settings, platform|
     # Check that we're not linking against system libstdc++ and libgcc_s
     tests = [
       "#{ldd} lib/libfacter.so",
-      "[ $$(#{ldd} lib/libfacter.so | grep -c libstdc++) -eq 0 ] || #{ldd} lib/libfacter.so | grep libstdc++ | grep -v ' /lib'",
-      "[ $$(#{ldd} lib/libfacter.so | grep -c libgcc_s) -eq 0 ] || #{ldd} lib/libfacter.so | grep libgcc_s | grep -v ' /lib'",
+      "[ $(#{ldd} lib/libfacter.so | grep -c libstdc++) -eq 0 ] || #{ldd} lib/libfacter.so | grep libstdc++ | grep -v ' /lib'",
+      "[ $(#{ldd} lib/libfacter.so | grep -c libgcc_s) -eq 0 ] || #{ldd} lib/libfacter.so | grep libgcc_s | grep -v ' /lib'",
     ]
   end
 

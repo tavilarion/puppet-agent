@@ -77,12 +77,12 @@ component "libwhereami" do |pkg, settings, platform|
   pkg.build do
     # Until a `check` target exists, run tests are part of the build.
     [
-      "#{make} -j$(shell expr $(shell #{platform[:num_cores]}) + 1)",
+      "#{make} -j$(($(#{platform[:num_cores]}) + 1))",
       "#{test}"
     ]
   end
 
   pkg.install do
-    ["#{make} -j$(shell expr $(shell #{platform[:num_cores]}) + 1) install"]
+    ["#{make} -j$(($(#{platform[:num_cores]}) + 1)) install"]
   end
 end

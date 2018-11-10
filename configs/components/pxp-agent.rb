@@ -7,7 +7,7 @@ component "pxp-agent" do |pkg, settings, platform|
   if platform.is_windows?
     pkg.environment "PATH", "$(shell cygpath -u #{settings[:gcc_bindir]}):$(shell cygpath -u #{settings[:ruby_bindir]}):/cygdrive/c/Windows/system32:/cygdrive/c/Windows:/cygdrive/c/Windows/System32/WindowsPowerShell/v1.0"
   else
-    pkg.environment "PATH", "#{settings[:bindir]}:/opt/pl-build-tools/bin:$(PATH)"
+    pkg.environment "PATH", "#{settings[:bindir]}:/opt/pl-build-tools/bin:${PATH}"
   end
 
   if settings[:system_openssl]
@@ -75,11 +75,11 @@ component "pxp-agent" do |pkg, settings, platform|
   end
 
   pkg.build do
-    ["#{make} -j$(shell expr $(shell #{platform[:num_cores]}) + 1)"]
+    ["#{make} -j$(($(#{platform[:num_cores]}) + 1))"]
   end
 
   pkg.install do
-    ["#{make} -j$(shell expr $(shell #{platform[:num_cores]}) + 1) install"]
+    ["#{make} -j$(($(#{platform[:num_cores]}) + 1)) install"]
   end
 
   if platform.is_windows?

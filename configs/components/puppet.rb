@@ -116,7 +116,7 @@ component "puppet" do |pkg, settings, platform|
       msgfmt = "/opt/pl-build-tools/bin/msgfmt"
     end
     pkg.configure do
-      ["for dir in ./locales/*/ ; do [ -d \"$${dir}\" ] || continue ; [ -d \"$${dir}/LC_MESSAGES\" ] || /bin/mkdir \"$${dir}/LC_MESSAGES\" ; #{msgfmt} \"$${dir}/puppet.po\" -o \"$${dir}/LC_MESSAGES/puppet.mo\" ; done ;",]
+      ["for dir in ./locales/*/ ; do [ -d \"${dir}\" ] || continue ; [ -d \"${dir}/LC_MESSAGES\" ] || /bin/mkdir \"${dir}/LC_MESSAGES\" ; #{msgfmt} \"${dir}/puppet.po\" -o \"${dir}/LC_MESSAGES/puppet.mo\" ; done ;",]
     end
   end
 
