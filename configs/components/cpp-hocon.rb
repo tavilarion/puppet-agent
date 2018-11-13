@@ -4,7 +4,6 @@ component "cpp-hocon" do |pkg, settings, platform|
   pkg.build_requires('leatherman')
 
   make = platform[:make]
-  boost_static_flag = "-DBOOST_STATIC=ON"
 
   # cmake on OSX is provided by brew
   # a toolchain is not currently required for OSX since we're building with clang.
@@ -23,7 +22,7 @@ component "cpp-hocon" do |pkg, settings, platform|
     special_flags = "-DCMAKE_CXX_FLAGS_RELEASE='-O2 -DNDEBUG'"
   elsif platform.is_windows?
     make = "#{settings[:gcc_bindir]}/mingw32-make"
-    pkg.environment "PATH", "$(shell cygpath -u #{settings[:gcc_bindir]}):$(shell cygpath -u #{settings[:bindir]}):/cygdrive/c/Windows/system32:/cygdrive/c/Windows:/cygdrive/c/Windows/System32/WindowsPowerShell/v1.0"
+    pkg.environment "PATH", "$(shell cygpath -u #{settings[:prefix]}/lib):$(shell cygpath -u #{settings[:gcc_bindir]}):$(shell cygpath -u #{settings[:bindir]}):/cygdrive/c/Windows/system32:/cygdrive/c/Windows:/cygdrive/c/Windows/System32/WindowsPowerShell/v1.0"
     pkg.environment "CYGWIN", settings[:cygwin]
 
     cmake = "C:/ProgramData/chocolatey/bin/cmake.exe -G \"MinGW Makefiles\""
@@ -32,7 +31,6 @@ component "cpp-hocon" do |pkg, settings, platform|
     # These platforms use the default OS toolchain, rather than pl-build-tools
     cmake = "cmake"
     toolchain = ""
-    boost_static_flag = "-DBOOST_STATIC=OFF"
   else
     toolchain = "-DCMAKE_TOOLCHAIN_FILE=/opt/pl-build-tools/pl-build-toolchain.cmake"
     cmake = "/opt/pl-build-tools/bin/cmake"
@@ -51,7 +49,6 @@ component "cpp-hocon" do |pkg, settings, platform|
         -DCMAKE_PREFIX_PATH=#{settings[:prefix]} \
         -DCMAKE_INSTALL_PREFIX=#{settings[:prefix]} \
         #{special_flags} \
-        #{boost_static_flag} \
         ."]
   end
 

@@ -19,7 +19,7 @@ also vendored dependencies like ruby, curl, openssl, and more.
 
 This repository contains configuration to build puppet-agent and the facter gem
 for all of Puppet's supported platforms using
-[vanagon](https://github.com/puppetlabs/vanagon), a packaging utiltiy.
+[vanagon](https://github.com/puppetlabs/vanagon), a packaging utility.
 
 The full list of software components built into the puppet agent and the
 facter gem can be found in their [project definitions](configs/projects/), and
@@ -61,15 +61,13 @@ If you wish to build puppet-agent or the facter gem yourself:
    Puppet, you will need to make a few edits in the component and project
    files. The build process depends on the following packages:
      - GCC (>=4.8.0)
-     - Boost (>=1.57)
      - CMake (>= 3.2.3)
-     - yaml-cpp (>= 0.5.0)
 
-     Any references to pl-gcc, pl-cmake, pl-boost, pl-yaml-cpp, etc. in the
-     [configs directory](configs/) will need to be changed to refer to
-     equivalent installable packages on your target operating system. In many
-     cases, you can drop the `pl-` prefix and ensure that CXX or CC envrionment
-     variables are what they should be.
+     Any references to pl-gcc, pl-cmake, etc. in the [configs
+     directory](configs/) will need to be changed to refer to equivalent
+     installable packages on your target operating system. In many cases, you
+     can drop the `pl-` prefix and ensure that CXX or CC environment variables
+     are what they should be.
 4. Update the `location` and `version` in the [puppet-runtime
    component json file](configs/components/puppet-runtime.json) as follows:
    - `location` should be a file URL to your local puppet-runtime output
@@ -124,7 +122,7 @@ Here's a sample snippet used for a stable -> master merge:
 
 ```
 git merge --no-commit --no-ff stable
-for i in {hiera,facter,puppet,marionette-collective,pxp-agent,cpp-pcp-client}; do git checkout master -- configs/components/$i.json;done
+for i in {hiera,facter,puppet,pxp-agent,cpp-pcp-client}; do git checkout master -- configs/components/$i.json;done
 git commit -m "(maint) Restore promoted components refs after merge from stable"
 ```
 

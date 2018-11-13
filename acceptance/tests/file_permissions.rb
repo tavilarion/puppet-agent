@@ -60,7 +60,6 @@ Compare-Sddl -Path C:\ProgramData\PuppetLabs\facter -Expected $SDDL_DIR_EVERYONE
 
 # Make sure sensitive directories restrict permissions
 Compare-Sddl -Path C:\ProgramData\PuppetLabs\code -Expected $SDDL_DIR_ADMIN_ONLY
-Compare-Sddl -Path C:\ProgramData\PuppetLabs\mcollective -Expected $SDDL_DIR_ADMIN_ONLY
 Compare-Sddl -Path C:\ProgramData\PuppetLabs\puppet -Expected $SDDL_DIR_ADMIN_ONLY
 Compare-Sddl -Path C:\ProgramData\PuppetLabs\pxp-agent -Expected $SDDL_DIR_ADMIN_ONLY
 
@@ -69,7 +68,7 @@ Compare-Sddl -Path C:\ProgramData\PuppetLabs\code\environments\production -Expec
 Compare-Sddl -Path C:\ProgramData\PuppetLabs\code\environments\production\environment.conf -Expected $SDDL_FILE_ADMIN_ONLY
 
 # Ensure we didn't miss anything, Exclude doesn't work right on 2008r2
-$expected=@("facter","code","mcollective","puppet","pxp-agent");
+$expected=@("facter","code","puppet","pxp-agent");
 $children = Get-ChildItem -Path C:\ProgramData\PuppetLabs
 if ($children.Length -ne $expected.Length) {
    $unexpected = Compare-Object -ReferenceObject $children -DifferenceObject $expected

@@ -8,7 +8,7 @@ project "puppet-agent" do |proj|
 
   settings[:puppet_runtime_version] = runtime_details['version']
   settings[:puppet_runtime_location] = runtime_details['location']
-  settings[:puppet_runtime_basename] = "agent-runtime-5.5.x-#{runtime_details['version']}.#{platform.name}"
+  settings[:puppet_runtime_basename] = "agent-runtime-master-#{runtime_details['version']}.#{platform.name}"
 
   settings_uri = File.join(runtime_details['location'], "#{proj.settings[:puppet_runtime_basename]}.settings.yaml")
   sha1sum_uri = "#{settings_uri}.sha1"
@@ -48,31 +48,26 @@ project "puppet-agent" do |proj|
     # Directory IDs
     proj.setting(:bindir_id, "bindir")
 
-    # We build for windows not in the final destination, but in the paths that correspond
-    # to the directory ids expected by WIX. This will allow for a portable installation (ideally).
-    proj.setting(:facter_root, File.join(proj.install_root, "facter"))
-    proj.setting(:hiera_root, File.join(proj.install_root, "hiera"))
-    proj.setting(:hiera_bindir, File.join(proj.hiera_root, "bin"))
-    proj.setting(:hiera_libdir, File.join(proj.hiera_root, "lib"))
-    proj.setting(:mco_root, File.join(proj.install_root, "mcollective"))
-    proj.setting(:mco_bindir, File.join(proj.mco_root, "bin"))
-    proj.setting(:mco_libdir, File.join(proj.mco_root, "lib"))
     proj.setting(:pxp_root, File.join(proj.install_root, "pxp-agent"))
     proj.setting(:service_dir, File.join(proj.install_root, "service"))
-    proj.setting(:ruby_dir, File.join(proj.install_root, "sys/ruby"))
-    proj.setting(:ruby_bindir, File.join(proj.ruby_dir, "bin"))
   end
 
   proj.setting(:puppet_configdir, File.join(proj.sysconfdir, 'puppet'))
   proj.setting(:puppet_codedir, File.join(proj.sysconfdir, 'code'))
 
-  proj.description "The Puppet Agent package contains all of the elements needed to run puppet, including ruby, facter, hiera and mcollective."
+  # Target directory for vendor modules
+  proj.setting(:module_vendordir, File.join(proj.prefix, 'vendor_modules'))
+
+  # Used to construct download URLs for forge modules in _base-module.rb
+  proj.setting(:forge_download_baseurl, "https://forge.puppet.com/v3/files")
+
+  proj.description "The Puppet Agent package contains all of the elements needed to run puppet, including ruby, facter, and hiera."
   proj.version_from_git
   proj.write_version_file File.join(proj.prefix, 'VERSION')
   proj.license "See components"
   proj.vendor "Puppet Labs <info@puppetlabs.com>"
   proj.homepage "https://www.puppetlabs.com"
-  proj.target_repo "puppet5"
+  proj.target_repo "puppet6"
 
   if platform.is_solaris?
     proj.identifier "puppetlabs.com"
@@ -94,7 +89,6 @@ project "puppet-agent" do |proj|
   proj.component "hiera"
   proj.component "leatherman"
   proj.component "cpp-hocon"
-  proj.component "marionette-collective"
   proj.component "cpp-pcp-client"
   proj.component "pxp-agent"
   proj.component "libwhereami"
@@ -103,6 +97,7 @@ project "puppet-agent" do |proj|
   # Provides augeas, curl, libedit, libxml2, libxslt, openssl, puppet-ca-bundle, ruby and rubygem-*
   proj.component "puppet-runtime"
   proj.component "nssm" if platform.is_windows?
+  proj.component "rubygem-puppet-resource_api"
 
   # These utilites don't really work on unix
   if platform.is_linux?
@@ -122,6 +117,22 @@ project "puppet-agent" do |proj|
   if platform.is_macos?
     proj.component "cfpropertylist"
   end
+
+  # Vendored modules
+  proj.component "module-puppetlabs-augeas_core"
+  proj.component "module-puppetlabs-cron_core"
+  proj.component "module-puppetlabs-host_core"
+  proj.component "module-puppetlabs-mount_core"
+  proj.component "module-puppetlabs-scheduled_task"
+  proj.component "module-puppetlabs-selinux_core"
+  proj.component "module-puppetlabs-sshkeys_core"
+  proj.component "module-puppetlabs-yumrepo_core"
+  proj.component "module-puppetlabs-zfs_core"
+  proj.component "module-puppetlabs-zone_core"
+
+  # Including headers can make the package unacceptably large; This component
+  # removes files that aren't required:
+  proj.component "cleanup"
 
   proj.directory proj.install_root
   proj.directory proj.prefix

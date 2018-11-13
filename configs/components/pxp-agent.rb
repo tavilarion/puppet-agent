@@ -5,7 +5,7 @@ component "pxp-agent" do |pkg, settings, platform|
   cmake = "/opt/pl-build-tools/bin/cmake"
 
   if platform.is_windows?
-    pkg.environment "PATH", "$(shell cygpath -u #{settings[:gcc_bindir]}):$(shell cygpath -u #{settings[:ruby_bindir]}):/cygdrive/c/Windows/system32:/cygdrive/c/Windows:/cygdrive/c/Windows/System32/WindowsPowerShell/v1.0"
+    pkg.environment "PATH", "$(shell cygpath -u #{settings[:prefix]}/lib):$(shell cygpath -u #{settings[:gcc_bindir]}):$(shell cygpath -u #{settings[:ruby_bindir]}):/cygdrive/c/Windows/system32:/cygdrive/c/Windows:/cygdrive/c/Windows/System32/WindowsPowerShell/v1.0"
   else
     pkg.environment "PATH", "#{settings[:bindir]}:/opt/pl-build-tools/bin:${PATH}"
   end
@@ -22,7 +22,6 @@ component "pxp-agent" do |pkg, settings, platform|
 
   make = platform[:make]
 
-  boost_static_flag = "-DBOOST_STATIC=ON"
   special_flags = " -DCMAKE_INSTALL_PREFIX=#{settings[:prefix]} "
 
   if platform.is_aix?
@@ -45,14 +44,12 @@ component "pxp-agent" do |pkg, settings, platform|
     make = "#{settings[:gcc_bindir]}/mingw32-make"
     pkg.environment "CYGWIN", settings[:cygwin]
 
-    special_flags = " -DCMAKE_INSTALL_PREFIX=#{settings[:pxp_root]} "
     cmake = "C:/ProgramData/chocolatey/bin/cmake.exe -G \"MinGW Makefiles\""
     toolchain = "-DCMAKE_TOOLCHAIN_FILE=#{settings[:tools_root]}/pl-build-toolchain.cmake"
   elsif platform.name =~ /sles-15/
     # These platforms use the default OS toolchain, rather than pl-build-tools
     cmake = "cmake"
     toolchain = ""
-    boost_static_flag = "-DBOOST_STATIC=OFF"
     special_flags += " -DCMAKE_CXX_FLAGS='#{settings[:cflags]} -Wno-deprecated -Wimplicit-fallthrough=0' "
   elsif platform.is_cisco_wrlinux?
     special_flags += " -DLEATHERMAN_USE_LOCALES=OFF "
@@ -69,7 +66,6 @@ component "pxp-agent" do |pkg, settings, platform|
           -DCMAKE_SYSTEM_PREFIX_PATH=#{settings[:prefix]} \
           -DMODULES_INSTALL_PATH=#{File.join(settings[:install_root], 'pxp-agent', 'modules')} \
           #{special_flags} \
-          #{boost_static_flag} \
           ."
     ]
   end
@@ -82,56 +78,12 @@ component "pxp-agent" do |pkg, settings, platform|
     ["#{make} -j$(($(#{platform[:num_cores]}) + 1)) install"]
   end
 
-  if platform.is_windows?
-    # In PA-1850, it was found that when there is a system version of openssl
-    # installed on Windows, then the pxp-agent will fail to start properly if
-    # the user tries to restart it. Specifically, Puppet shows the service as
-    # being in the "paused" state. The reason this happened is because when Windows
-    # executes the pxp-agent.exe file, it searches for its required .dll files first
-    # in the .exe file's directory, then in the system library directory
-    # (e.g. C:\Windows:\System32), and then the custom PATH last (as a rough approximation,
-    # it actually searches some other locations, but the relative ordering of ".exe directory"
-    # => "system library directory" => PATH is still there). See https://msdn.microsoft.com/en-us/library/7d83bc18.aspx
-    # for more details. Since we do not have any .dll files in pxp-agent/bin, the system
-    # openssl is detected as pxp-agent's openssl library instead of Puppet's openssl, which
-    # is installed in [INSTALLDIR]\Puppet\puppet\bin. Of course, pxp-agent is not built to work
-    # with the system openssl, so it fails to start properly.
-    #
-    # By copying the dependent .dll files in the puppet/bin directory to pxp-agent/bin,
-    # we ensure that Windows uses our in-house .dll files to start up pxp-agent.
-    #
-    # See https://tickets.puppetlabs.com/browse/PA-1850 for all the details.
-    pkg.install do
-      dependent_dlls = [
-        "leatherman_curl.dll",
-        "leatherman_execution.dll",
-        "leatherman_file_util.dll",
-        "leatherman_json_container.dll",
-        "leatherman_locale.dll",
-        "leatherman_logging.dll",
-        "leatherman_nowide.dll",
-        "leatherman_util.dll",
-        "leatherman_windows.dll",
-        "libcpp-pcp-client.dll",
-        "libeay32.dll",
-        "ssleay32.dll",
-        platform.architecture == "x64" ? "libgcc_s_seh-1.dll" : "libgcc_s_sjlj-1.dll",
-        "libstdc++-6.dll"
-      ]
-
-      dependent_dlls.map do |dll|
-        "C:/cygwin64/bin/cp.exe #{settings[:prefix]}/bin/#{dll} #{settings[:pxp_root]}/bin"
-      end
-    end
-  end
-
   pkg.directory File.join(settings[:sysconfdir], 'pxp-agent')
   if platform.is_windows?
-    pkg.directory File.join(settings[:sysconfdir], 'pxp-agent', 'etc', 'modules')
-    pkg.directory File.join(settings[:sysconfdir], 'pxp-agent', 'var', 'spool')
-    pkg.directory File.join(settings[:sysconfdir], 'pxp-agent', 'tasks-cache')
-    pkg.directory File.join(settings[:sysconfdir], 'pxp-agent', 'var', 'log')
-    pkg.directory File.join(settings[:sysconfdir], 'pxp-agent', 'var', 'run')
+    pkg.directory File.join(settings[:sysconfdir], 'pxp-agent', 'modules')
+    pkg.directory File.join(settings[:install_root], 'pxp-agent', 'spool')
+    pkg.directory File.join(settings[:install_root], 'pxp-agent', 'tasks-cache')
+    pkg.directory File.join(settings[:sysconfdir], 'pxp-agent', 'log')
   else
     # Output directories (spool, tasks-cache, logdir) are restricted to root agent.
     # Modules is left readable so non-root agents can also use the installed modules.
@@ -167,7 +119,7 @@ component "pxp-agent" do |pkg, settings, platform|
   when "windows"
     # Note - this definition indicates that the file should be filtered out from the Wix
     # harvest. A corresponding service definition file is also required in resources/windows/wix
-    pkg.install_service "SourceDir\\#{settings[:base_dir]}\\#{settings[:company_id]}\\#{settings[:product_id]}\\service\\nssm.exe"
+    pkg.install_service "SourceDir\\#{settings[:base_dir]}\\#{settings[:company_id]}\\#{settings[:product_id]}\\puppet\\bin\\nssm.exe"
   else
     fail "need to know where to put #{pkg.get_name} service files"
   end

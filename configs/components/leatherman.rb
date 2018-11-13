@@ -5,40 +5,33 @@ component "leatherman" do |pkg, settings, platform|
 
   if platform.is_macos?
     pkg.build_requires "cmake"
-    pkg.build_requires "boost"
     pkg.build_requires "gettext"
   elsif platform.name =~ /solaris-10/
-    pkg.build_requires "http://pl-build-tools.delivery.puppetlabs.net/solaris/10/pl-boost-1.58.0-7.#{platform.architecture}.pkg.gz"
     pkg.build_requires "http://pl-build-tools.delivery.puppetlabs.net/solaris/10/pl-cmake-3.2.3-2.i386.pkg.gz"
   elsif platform.is_cross_compiled_linux? || platform.name =~ /solaris-11/
-    pkg.build_requires "pl-boost-#{platform.architecture}"
     pkg.build_requires "pl-cmake"
   elsif platform.is_aix?
     pkg.build_requires "http://pl-build-tools.delivery.puppetlabs.net/aix/#{platform.os_version}/ppc/pl-gcc-5.2.0-11.aix#{platform.os_version}.ppc.rpm"
     pkg.build_requires "http://pl-build-tools.delivery.puppetlabs.net/aix/#{platform.os_version}/ppc/pl-cmake-3.2.3-2.aix#{platform.os_version}.ppc.rpm"
-    pkg.build_requires "http://pl-build-tools.delivery.puppetlabs.net/aix/#{platform.os_version}/ppc/pl-boost-1.58.0-7.aix#{platform.os_version}.ppc.rpm"
     pkg.build_requires "http://pl-build-tools.delivery.puppetlabs.net/aix/#{platform.os_version}/ppc/pl-gettext-0.19.8-2.aix#{platform.os_version}.ppc.rpm"
   elsif platform.is_windows?
     pkg.build_requires "cmake"
     pkg.build_requires "pl-toolchain-#{platform.architecture}"
-    pkg.build_requires "pl-boost-#{platform.architecture}"
     pkg.build_requires "pl-gettext-#{platform.architecture}"
   elsif platform.name =~ /sles-15/
     # These platforms use their default OS toolchain and have package
     # dependencies configured in the platform provisioning step.
   else
     pkg.build_requires "pl-cmake"
-    pkg.build_requires "pl-boost"
     pkg.build_requires "pl-gettext"
   end
 
-  pkg.build_requires "puppet-runtime" # Provides curl and ruby
+  pkg.build_requires "puppet-runtime" # Provides boost, curl, ruby
   pkg.build_requires "runtime" unless platform.name =~ /sles-15/
 
   ruby = "#{settings[:host_ruby]} -rrbconfig"
 
   leatherman_locale_var = ""
-  boost_static_flag = "-DBOOST_STATIC=ON"
 
   # cmake on OSX is provided by brew
   # a toolchain is not currently required for OSX since we're building with clang.
@@ -62,7 +55,7 @@ component "leatherman" do |pkg, settings, platform|
     special_flags = "-DCMAKE_CXX_FLAGS_RELEASE='-O2 -DNDEBUG'"
   elsif platform.is_windows?
     make = "#{settings[:gcc_bindir]}/mingw32-make"
-    pkg.environment "PATH", "$(shell cygpath -u #{settings[:gcc_bindir]}):$(shell cygpath -u #{settings[:ruby_bindir]}):/cygdrive/c/Windows/system32:/cygdrive/c/Windows:/cygdrive/c/Windows/System32/WindowsPowerShell/v1.0"
+    pkg.environment "PATH", "$(shell cygpath -u #{settings[:libdir]}):$(shell cygpath -u #{settings[:gcc_bindir]}):$(shell cygpath -u #{settings[:bindir]}):/cygdrive/c/Windows/system32:/cygdrive/c/Windows:/cygdrive/c/Windows/System32/WindowsPowerShell/v1.0"
     pkg.environment "CYGWIN", settings[:cygwin]
 
     cmake = "C:/ProgramData/chocolatey/bin/cmake.exe -G \"MinGW Makefiles\""
@@ -74,7 +67,6 @@ component "leatherman" do |pkg, settings, platform|
     # These platforms use the default OS toolchain, rather than pl-build-tools
     cmake = "cmake"
     toolchain = ""
-    boost_static_flag = "-DBOOST_STATIC=OFF"
   else
     toolchain = "-DCMAKE_TOOLCHAIN_FILE=/opt/pl-build-tools/pl-build-toolchain.cmake"
     cmake = "/opt/pl-build-tools/bin/cmake"
@@ -100,7 +92,6 @@ component "leatherman" do |pkg, settings, platform|
         #{leatherman_locale_var} \
         -DLEATHERMAN_SHARED=TRUE \
         #{special_flags} \
-        #{boost_static_flag} \
         ."]
   end
 
