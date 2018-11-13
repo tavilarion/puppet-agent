@@ -5,9 +5,11 @@ component 'puppet-runtime' do |pkg, settings, platform|
 
   pkg.version settings[:puppet_runtime_version]
 
-  tarball_name = "#{settings[:puppet_runtime_basename]}.tar.gz"
-  pkg.url File.join(settings[:puppet_runtime_location], tarball_name)
-  pkg.sha1sum File.join(settings[:puppet_runtime_location], "#{tarball_name}.sha1")
+  unless platform.name =~ /generic/
+    tarball_name = "#{settings[:puppet_runtime_basename]}.tar.gz"
+    pkg.url File.join(settings[:puppet_runtime_location], tarball_name)
+    pkg.sha1sum File.join(settings[:puppet_runtime_location], "#{tarball_name}.sha1")
+  end
 
   # The contents of the runtime replace the following:
   pkg.replaces 'pe-augeas'
@@ -81,6 +83,8 @@ component 'puppet-runtime' do |pkg, settings, platform|
       "tar -xzf #{tarball_name}",
       "for d in opt var private; do rsync -ka \"${d}/\" \"/${d}/\"; done"
     ]
+  elsif platform.name =~ /generic/
+    install_command = "true"
   else
     install_command = ["gunzip -c #{tarball_name} | #{platform.tar} -k -C / -xf -"]
   end
