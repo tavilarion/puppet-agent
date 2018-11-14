@@ -24,7 +24,7 @@ component "runtime" do |pkg, settings, platform|
     pkg.build_requires "pl-pdcurses-#{platform.architecture}"
     # We only need zlib because curl is dynamically linking against zlib
     pkg.build_requires "pl-zlib-#{platform.architecture}"
-  elsif platform.name =~ /sles-15/
+  elsif platform.name =~ /sles-15/ || platform.name =~ /generic/
     # These platforms use their default OS toolchain and have package
     # dependencies configured in the platform provisioning step.
   else
@@ -38,6 +38,7 @@ component "runtime" do |pkg, settings, platform|
     libdir = "/opt/pl-build-tools/lib"
   elsif platform.architecture =~ /64/
     libdir = "/opt/pl-build-tools/lib64"
+    libdir = "/usr/lib/x86_64-linux-gnu" if platform.name =~ /generic/  # TODO: make this use the platform triple
   end
 
   # The runtime script uses readlink, which is in an odd place on Solaris systems:

@@ -18,7 +18,7 @@ component "leatherman" do |pkg, settings, platform|
     pkg.build_requires "cmake"
     pkg.build_requires "pl-toolchain-#{platform.architecture}"
     pkg.build_requires "pl-gettext-#{platform.architecture}"
-  elsif platform.name =~ /sles-15/
+  elsif platform.name =~ /sles-15/ || platform.name =~ /generic/
     # These platforms use their default OS toolchain and have package
     # dependencies configured in the platform provisioning step.
   else
@@ -63,7 +63,7 @@ component "leatherman" do |pkg, settings, platform|
 
     # Use environment variable set in environment.bat to find locale files
     leatherman_locale_var = "-DLEATHERMAN_LOCALE_VAR='PUPPET_DIR' -DLEATHERMAN_LOCALE_INSTALL='share/locale'"
-  elsif platform.name =~ /sles-15/
+  elsif platform.name =~ /sles-15/ || platform.name =~ /generic/
     # These platforms use the default OS toolchain, rather than pl-build-tools
     cmake = "cmake"
     toolchain = ""

@@ -20,7 +20,7 @@ component "facter" do |pkg, settings, platform|
 
   pkg.build_requires 'puppet-runtime' # Provides augeas, boost, curl, openssl, ruby, yaml-cpp
   pkg.build_requires 'leatherman'
-  pkg.build_requires 'runtime' unless platform.name =~ /sles-15/
+  pkg.build_requires 'runtime' unless platform.name =~ /sles-15/ || platform.name =~ /generic/
   pkg.build_requires 'cpp-hocon'
   pkg.build_requires 'libwhereami'
 
@@ -40,6 +40,8 @@ component "facter" do |pkg, settings, platform|
   java_home = ''
   java_includedir = ''
   case platform.name
+  when /generic/ # turn off dependency checking for java temporarily re: puppercon/containers work
+    skip_jruby = 'ON'
   when /el-(6|7)/
     pkg.build_requires 'java-1.8.0-openjdk-devel'
   when /(debian-8|ubuntu-14)/
@@ -72,18 +74,22 @@ component "facter" do |pkg, settings, platform|
   # Skip blkid unless we can ensure it exists at build time. Otherwise we depend
   # on the vagaries of the system we build on.
   skip_blkid = 'ON'
-  if platform.is_deb? || platform.is_cisco_wrlinux?
-    pkg.build_requires "libblkid-dev"
-    skip_blkid = 'OFF'
-  elsif platform.is_rpm?
-    if (platform.is_el? && platform.os_version.to_i >= 6) || (platform.is_sles? && platform.os_version.to_i >= 11) || platform.is_fedora?
-      # Ensure libblkid-devel isn't installed for all cross-compiled builds,
-      # otherwise the build will fail trying to link to the x86_64 libblkid:
-      pkg.build_requires "libblkid-devel" unless platform.is_cross_compiled?
+  if platform.name =~ /generic/
+    # turn off dependency checking for blkid temporarily re: puppercon/containers work
+  else
+    if platform.is_deb? || platform.is_cisco_wrlinux?
+      pkg.build_requires "libblkid-dev"
       skip_blkid = 'OFF'
-    elsif (platform.is_el? && platform.os_version.to_i < 6) || (platform.is_sles? && platform.os_version.to_i < 11)
-      pkg.build_requires "e2fsprogs-devel"
-      skip_blkid = 'OFF'
+    elsif platform.is_rpm?
+      if (platform.is_el? && platform.os_version.to_i >= 6) || (platform.is_sles? && platform.os_version.to_i >= 11) || platform.is_fedora?
+        # Ensure libblkid-devel isn't installed for all cross-compiled builds,
+        # otherwise the build will fail trying to link to the x86_64 libblkid:
+        pkg.build_requires "libblkid-devel" unless platform.is_cross_compiled?
+        skip_blkid = 'OFF'
+      elsif (platform.is_el? && platform.os_version.to_i < 6) || (platform.is_sles? && platform.os_version.to_i < 11)
+        pkg.build_requires "e2fsprogs-devel"
+        skip_blkid = 'OFF'
+      end
     end
   end
 
@@ -126,7 +132,7 @@ component "facter" do |pkg, settings, platform|
 
     cmake = "C:/ProgramData/chocolatey/bin/cmake.exe -G \"MinGW Makefiles\""
     toolchain = "-DCMAKE_TOOLCHAIN_FILE=#{settings[:tools_root]}/pl-build-toolchain.cmake"
-  elsif platform.name =~ /sles-15/
+  elsif platform.name =~ /sles-15/ || platform.name =~ /generic/
     # These platforms use the default OS toolchain, rather than pl-build-tools
     cmake = "cmake"
     toolchain = ""
