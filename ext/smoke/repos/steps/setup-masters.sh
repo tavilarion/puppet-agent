@@ -46,18 +46,28 @@ for master_vm in ${master_vm1} ${master_vm2}; do
 
   echo "STEP: Install puppet-agent on ${which_master}"
   # on_master ${master_vm} "rpm --quiet --query puppet-agent-${agent_version} || yum install -y puppet-agent-${agent_version}"
-  on_master ${master_vm} "echo \`facter ipaddress\` puppet > /etc/hosts"
+  # on_master ${master_vm} "echo \`facter ipaddress\` puppet > /etc/hosts"
+  # on_master ${master_vm} "curl -f -O http://builds.puppetlabs.lan/puppet-agent/${agent_version}/artifacts/el/7/${collection}/x86_64/puppet-agent-${agent_version}-1.el7.x86_64.rpm"
+  # on_master ${master_vm} "yum install -y puppet-agent-${agent_version}-1.el7.x86_64.rpm"
+
   on_master ${master_vm} "curl -f -O http://builds.puppetlabs.lan/puppet-agent/${agent_version}/artifacts/el/7/${collection}/x86_64/puppet-agent-${agent_version}-1.el7.x86_64.rpm"
-  on_master ${master_vm} "yum install -y puppet-agent-${agent_version}-1.el7.x86_64.rpm"
+  on_master ${master_vm} "rpm -ivh puppet-agent-${agent_version}-1.el7.x86_64.rpm"
   echo ""
   echo ""
 
   echo "STEP: Install puppetserver on ${which_master}"
   # on_master ${master_vm} "rpm --quiet --query puppetserver-${server_version} || yum install -y puppetserver-${server_version}"
+  # on_master ${master_vm} "curl -f -O http://builds.puppetlabs.lan/puppetserver/${server_version}/artifacts/el/7/${collection}/x86_64/puppetserver-${server_version}-1.el7.noarch.rpm"
+  # on_master ${master_vm} "yum install -y puppetserver-${server_version}-1.el7.noarch.rpm"
+  # on_master ${master_vm} "puppet resource service puppetserver ensure=stopped"
+  # on_master ${master_vm} "puppet resource service puppetserver ensure=running enable=true"
   on_master ${master_vm} "curl -f -O http://builds.puppetlabs.lan/puppetserver/${server_version}/artifacts/el/7/${collection}/x86_64/puppetserver-${server_version}-1.el7.noarch.rpm"
-  on_master ${master_vm} "yum install -y puppetserver-${server_version}-1.el7.noarch.rpm"
-  on_master ${master_vm} "puppet resource service puppetserver ensure=stopped"
-  on_master ${master_vm} "puppet resource service puppetserver ensure=running enable=true"
+  on_master ${master_vm} "yum install -y java-1.8.0-openjdk-headless"
+  on_master ${master_vm} "rpm -ivh puppetserver-${server_version}-1.el7.noarch.rpm"
+  on_master ${master_vm} "echo \`facter ipaddress\` puppet > /etc/hosts"
+
+  on_master ${master_vm} "puppet resource service puppetserver ensure=running"
+  on_master ${master_vm} "puppet agent -t"
 
   set +e
   on_master ${master_vm} "puppet agent -t"
