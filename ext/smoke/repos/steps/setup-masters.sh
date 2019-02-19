@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -e
+set -e -x
 
 source "$(dirname $0)/../../helpers.sh"
 
@@ -42,17 +42,23 @@ function identify_master() {
 echo "STEP: Install puppetserver and puppet-agent on both masters"
 for master_vm in ${master_vm1} ${master_vm2}; do
   which_master=`identify_master ${master_vm}`
-  on_master ${master_vm} "rpm -Uvh http://yum.puppetlabs.com/${collection}/${collection}-release-el-7.noarch.rpm --force"
+  # on_master ${master_vm} "rpm -Uvh http://yum.puppetlabs.com/${collection}/${collection}-release-el-7.noarch.rpm --force"
 
   echo "STEP: Install puppet-agent on ${which_master}"
-  on_master ${master_vm} "rpm --quiet --query puppet-agent-${agent_version} || yum install -y puppet-agent-${agent_version}"
+  # on_master ${master_vm} "rpm --quiet --query puppet-agent-${agent_version} || yum install -y puppet-agent-${agent_version}"
   on_master ${master_vm} "echo \`facter ipaddress\` puppet > /etc/hosts"
+  on_master ${master_vm} "curl -f -O http://builds.puppetlabs.lan/puppet-agent/${agent_version}/artifacts/el/7/${collection}/x86_64/puppet-agent-${agent_version}-1.el7.x86_64.rpm"
+  on_master ${master_vm} "yum install -y puppet-agent-${agent_version}-1.el7.x86_64.rpm"
   echo ""
   echo ""
 
   echo "STEP: Install puppetserver on ${which_master}"
-  on_master ${master_vm} "rpm --quiet --query puppetserver-${server_version} || yum install -y puppetserver-${server_version}"
-  on_master ${master_vm} "puppet resource service puppetserver ensure=running"
+  # on_master ${master_vm} "rpm --quiet --query puppetserver-${server_version} || yum install -y puppetserver-${server_version}"
+  on_master ${master_vm} "curl -f -O http://builds.puppetlabs.lan/puppetserver/${server_version}/artifacts/el/7/${collection}/x86_64/puppetserver-${server_version}-1.el7.noarch.rpm"
+  on_master ${master_vm} "yum install -y puppetserver-${server_version}-1.el7.noarch.rpm"
+  on_master ${master_vm} "puppet resource service puppetserver ensure=stopped"
+  on_master ${master_vm} "puppet resource service puppetserver ensure=running enable=true"
+
   set +e
   on_master ${master_vm} "puppet agent -t"
   exitcode=$?
